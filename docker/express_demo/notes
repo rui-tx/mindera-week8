@@ -1,0 +1,56 @@
+//just for testing
+brew install npm
+npm install
+npm run
+
+// not working
+docker run node:22 npm install && npm run
+
+// docs from
+// https://github.com/nodejs/docker-node/blob/main/README.md#how-to-use-this-image
+// https://www.digitalocean.com/community/tutorials/how-to-build-a-node-js-application-with-docker
+
+// working - removes it after finishing
+docker run -it --rm --name mindera-docker -p 8001:5000 -v "$PWD":/usr/src/app -w /usr/src/app node:8 node server.js
+
+// working
+version: "2"
+services:
+  node:
+    image: "node:8"
+    user: "node"
+    working_dir: /home/node/app
+    environment:
+      - NODE_ENV=production
+    volumes:
+      - ./:/home/node/app
+    ports: # use if it is necessary to expose the container to the host machine
+      - "8001:5000"
+    command: "npm start"
+
+    //should work
+    http://localhost:8001
+    http://localhost:8001/hello/rui
+
+
+Dockerfile
+FROM node:8-alpine
+
+RUN mkdir -p /home/node/app/node_modules && chown -R node:node /home/node/app
+
+WORKDIR /home/node/app
+
+COPY package*.json ./
+
+USER node
+
+RUN npm install
+
+COPY --chown=node:node . .
+
+EXPOSE 5000
+
+CMD [ "node", "server.js" ]
+
+docker build -t mindera-docker .
+docker run -it --rm -v 8001:5000 --name mindera-docker mindera-docker
