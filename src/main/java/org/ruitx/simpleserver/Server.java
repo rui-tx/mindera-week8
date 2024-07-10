@@ -5,7 +5,8 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.HashMap;
+import java.time.Instant;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -19,12 +20,18 @@ public class Server {
     }
 
     public void start() throws IOException {
-        int port = 8080;
+        int port = System.getenv("PORT") != null
+                ? Integer.parseInt(System.getenv("PORT"))
+                : Constants.DEFAULT_PORT;
 
         try (ServerSocket serverSocket = new ServerSocket(port)) {
             try (ExecutorService executorService = Executors.newCachedThreadPool()) {
-                System.out.printf(Messages.SERVER_STARTED.getMessage(), port);
-
+                System.out.printf(Messages.SERVER_LOG.getMessage(),
+                        Instant.now().getEpochSecond(),
+                        Messages.SERVER_STARTED.getMessage());
+                System.out.printf(Messages.SERVER_LOG.getMessage(),
+                        Instant.now().getEpochSecond(),
+                        "Using port " + port);
                 acceptConnections(serverSocket, executorService);
             }
         }
@@ -52,43 +59,70 @@ public class Server {
         public RequestHandler(Socket socket) {
 
             this.socket = socket;
-            headers = new HashMap<>();
+            headers = new LinkedHashMap<>();
             in = null;
             out = null;
         }
 
         @Override
         public void run() {
-            dealWithRequest(socket);
+            try {
+                dealWithRequest(socket);
+            } catch (IOException e) {
+                Messages.print(Messages.INTERNAL_SERVER_ERROR);
+                //throw new RuntimeException(e);
+            }
         }
 
-        public void dealWithRequest(Socket socket) {
-            try {
-                in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-                out = new DataOutputStream(socket.getOutputStream());
+        /**
+         * Deal with the client request
+         *
+         * @param socket
+         */
+        public void dealWithRequest(Socket socket) throws IOException {
 
-                String requesHeaderLine = "";
-                while (!Objects.equals(requesHeaderLine = in.readLine(), "")) {
-                    String[] requestLine = requesHeaderLine.split(" ", 2);
-                    headers.put(requestLine[0], requestLine[1]);
-                }
+            in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+            out = new DataOutputStream(socket.getOutputStream());
 
-                checkRequest(headers);
-
-                this.closeSocket();
-
-            } catch (IOException e) {
-                throw new RuntimeException(e);
+            // Get request headers into an ordered map
+            String requesHeaderLine;
+            while (!Objects.equals(requesHeaderLine = in.readLine(), "")) {
+                String[] requestLine = requesHeaderLine.split(" ", 2);
+                headers.put(requestLine[0].replace(":", ""), requestLine[1]);
             }
 
-            //System.out.printf(Messages.CLIENT_CONNECTED.getMessage(), socket.getInetAddress().getHostAddress(), socket.getPort());
+            System.out.printf(Messages.CLIENT_LOG.getMessage(),
+                    Instant.now().getEpochSecond(),
+                    socket.getInetAddress().getHostAddress(),
+                    socket.getPort(),
+                    Messages.CLIENT_CONNECTED.getMessage());
+
+            checkRequestAndSendResponse(headers);
+            this.closeSocket();
+
+            System.out.printf(Messages.CLIENT_LOG.getMessage(),
+                    Instant.now().getEpochSecond(),
+                    socket.getInetAddress().getHostAddress(),
+                    socket.getPort(),
+                    Messages.CLIENT_DISCONNECTED.getMessage());
         }
 
-        private void checkRequest(Map<String, String> headers) {
+        /**
+         * Check the request type and send the appropriate response
+         *
+         * @param headers
+         */
+        private void checkRequestAndSendResponse(Map<String, String> headers) throws IOException {
             String requestType = getRequestType(headers);
             sendResponse(requestType);
         }
 
+        /**
+         * Get the request type from the request headers
+         *
+         * @param headers
+         * @return
+         */
         private String getRequestType(Map<String, String> headers) {
             Optional<String> requestType = headers.keySet()
                     .stream()
@@ -98,7 +132,12 @@ public class Server {
             return requestType.orElse("INVALID");
         }
 
-        private void sendResponse(String requestType) {
+        /**
+         * Send the appropriate response based on the request type
+         *
+         * @param requestType
+         */
+        private void sendResponse(String requestType) throws IOException {
             RequestType request = RequestType.fromString(requestType);
 
             switch (request) {
@@ -129,110 +168,63 @@ public class Server {
             }
         }
 
-        private void send404() {
-            String path = "/Users/ruiteixeira/NC/Coding/mindera/mindera-week8/";  //TODO: Change to real path
-            File file = new File(path + "src/main/resources/simpleserver/404.html");
+        /**
+         * Send the GET request
+         *
+         * @param endPoint the end point to send
+         * @throws IOException
+         */
+        private void sendGET(String endPoint) throws IOException {
+            String htmlFile;
+            htmlFile = endPoint.equals("/")
+                    ? Constants.RESOURCES_PATH + "index.html"
+                    : Constants.RESOURCES_PATH + endPoint;
 
-            try {
-                byte[] bytes = Files.readAllBytes(Path.of(file.getPath()));
-                out.writeBytes(
-                        "HTTP/1.1 404 NOT FOUND\r\n" +
-                                "Content-Type: " + Files.probeContentType(Path.of(file.getPath())) + "\r\n" +
-                                "Content-Length: " + file.length() + "\r\n" +
-                                "\r\n");
-                out.write(bytes, 0, bytes.length);
-                return;
-
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        }
-
-        private void sendGET(String endPoint) {
-            String path = "/Users/ruiteixeira/NC/Coding/mindera/mindera-week8/";  //TODO: Change to real path
-            String filePath = "";
-            if (endPoint.equals("/")) {
-                filePath = path + "src/main/resources/simpleserver/index.html";
-            } else {
-                filePath = path + "src/main/resources/simpleserver/" + endPoint;
-            }
-
-            File file = new File(filePath);
-
-            if (!file.exists() || !file.isFile()) {
+            File htmlPage = new File(htmlFile);
+            if (!htmlPage.exists() || !htmlPage.isFile()) {
                 send404();
                 return;
             }
 
-            try {
-                byte[] bytes = Files.readAllBytes(Path.of(file.getPath()));
-                out.writeBytes(
-                        "HTTP/1.1 200 OK\r\n" +
-                                "Content-Type: " + Files.probeContentType(Path.of(filePath)) + "\r\n" +
-                                "Content-Length: " + file.length() + "\r\n" +
-                                "\r\n");
-                out.write(bytes, 0, bytes.length);
+            Header responseHeader = new Header.Builder(ResponseCodes.OK.toString())
+                    .contentType(Files.probeContentType(Path.of(htmlPage.getPath())))
+                    .contentLength(String.valueOf(htmlPage.length()))
+                    .endResponse()
+                    .build();
 
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
+            sendHeaderAndPage(responseHeader.headerToBytes(), Files.readAllBytes(Path.of(htmlPage.getPath())));
         }
 
+        private void send404() throws IOException {
+            File htmlFile = new File(Constants.RESOURCES_PATH + "404.html");
+            Header responseHeader = new Header.Builder(ResponseCodes.NOT_FOUND.toString())
+                    .contentType(Files.probeContentType(Path.of(htmlFile.getPath())))
+                    .contentLength(String.valueOf(htmlFile.length()))
+                    .endResponse()
+                    .build();
 
-        private void closeSocket() {
-            try {
-                //System.out.printf(Messages.CLIENT_DISCONNECTED.getMessage(), socket.getInetAddress().getHostAddress(), socket.getPort());
-                this.socket.close();
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
+            sendHeaderAndPage(responseHeader.headerToBytes(), Files.readAllBytes(Path.of(htmlFile.getPath())));
+        }
+
+        /**
+         * Send the header and the page
+         *
+         * @param htmlPage the page to send
+         * @param header   the header to send
+         * @throws IOException
+         */
+        private void sendHeaderAndPage(byte[] header, byte[] htmlPage) throws IOException {
+            out.write(header);
+            out.write(htmlPage, 0, htmlPage.length);
+        }
+
+        /**
+         * Close the socket
+         *
+         * @throws IOException
+         */
+        private void closeSocket() throws IOException {
+            this.socket.close();
         }
     }
 }
-
-
-                /*
-                try {
-                    requestLine = in.readLine();
-                    if (requestLine.equals("GET / HTTP/1.1")) {
-                        out.writeBytes("HTTP/1.1 200 OK\r\n\r\n");
-
-                        String htmlFile = """
-                                <!DOCTYPE html>
-                                <html>
-                                    <head>
-                                        <title>Hello World</title>
-                                    </head>
-                                    <body>
-                                        <h1>Hello World</h1>
-                                    </body>
-                                </html>
-                                """;
-
-
-                        byte[] bytes = htmlFile.getBytes();
-                        out.write(bytes, 0, bytes.length);
-                    }
-
-                    if (requestLine.equals("GET /favicon.ico HTTP/1.1")) {
-                        out.writeBytes("HTTP/1.1 200 OK\r\n\r\n");
-
-                        File file = new File("favicon.ico");
-                        byte[] bytes = Files.readAllBytes(Path.of(file.getPath()));
-                        out.write(bytes, 0, bytes.length);
-                    }
-                } catch (IOException ex) {
-                    throw new RuntimeException(ex);
-                }
-
-                 */
-
-                /*while (!Objects.equals(requestLine = in.readLine(), "")) {
-                    if (requestLine.equals("GET / HTTP/1.1")) {
-                        out.writeBytes("HTTP/1.1 200 OK\r\n");
-                        byte[] bytes = "1234".getBytes();
-                        out.write(bytes, 0, bytes.length);
-                    }
-
-                    System.out.println(requestLine);
-                 */
