@@ -2,6 +2,7 @@ package org.ruitx.simpleserver.server.endpoints;
 
 public enum Endpoint {
     TEST("/test", new TestHandler()),
+    TEST_REVERT("/test_revert", new TestRevertHandler()),
 
     NOT_FOUND("Endpoint not found", new EndpointNotFoundHandler());
 

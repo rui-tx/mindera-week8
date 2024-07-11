@@ -6,14 +6,14 @@ import org.ruitx.simpleserver.server.ResponseCodes;
 import java.io.DataOutputStream;
 import java.io.IOException;
 
-public class TestHandler implements EndpointHandler {
+public class TestRevertHandler implements EndpointHandler {
 
     @Override
     public void execute(DataOutputStream out) throws IOException {
 
         String htmlFragment = """
-                <button hx-get="/test_revert" hx-swap="outerHTML">
-                        Clicked! Click again to revert!
+                <button hx-get="/test" hx-swap="outerHTML">
+                        Click Me
                 </button>
                 """;
 
