@@ -1,4 +1,4 @@
-package org.ruitx.simpleserver;
+package org.ruitx.simpleserver.server;
 
 public enum RequestType {
     GET, POST, PUT, PATCH, DELETE, INVALID;

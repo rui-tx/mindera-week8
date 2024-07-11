@@ -1,5 +1,7 @@
 package org.ruitx.simpleserver;
 
+import org.ruitx.simpleserver.server.Server;
+
 import java.io.IOException;
 
 public class Main {
