@@ -1,4 +1,4 @@
-package org.ruitx.simpleserver;
+package org.ruitx.simpleserver.server;
 
 public enum ResponseCodes {
     OK(200, "OK"),
@@ -44,7 +44,7 @@ public enum ResponseCodes {
     public String getMessage() {
         return message;
     }
-    
+
     @Override
     public String toString() {
         return code + " " + message;

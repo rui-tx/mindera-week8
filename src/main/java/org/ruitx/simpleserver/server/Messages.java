@@ -1,4 +1,4 @@
-package org.ruitx.simpleserver;
+package org.ruitx.simpleserver.server;
 
 import org.ruitx.simpleserver.utils.TerminalColors;
 
@@ -8,7 +8,7 @@ public enum Messages {
     SERVER_STARTED(TerminalColors.ANSI_GREEN + "Server started" + TerminalColors.ANSI_RESET + "\n"),
     REQUEST_ERROR("Error: Request not recognized\n"),
     INVALID_REQUEST("Error: Invalid request\n"),
-    NOT_FOUND("Error: Not found\n"),
+    ENDPOINT_NOT_FOUND("Endpoint not found"),
     INTERNAL_SERVER_ERROR("Error: Internal server error\n"),
 
     CLIENT_LOG(TerminalColors.ANSI_WHITE + "[%d]" + TerminalColors.ANSI_RESET

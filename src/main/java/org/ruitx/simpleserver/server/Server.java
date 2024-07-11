@@ -1,4 +1,7 @@
-package org.ruitx.simpleserver;
+package org.ruitx.simpleserver.server;
+
+import org.ruitx.simpleserver.Constants;
+import org.ruitx.simpleserver.server.endpoints.Endpoint;
 
 import java.io.*;
 import java.net.ServerSocket;
@@ -97,14 +100,16 @@ public class Server {
                     socket.getPort(),
                     Messages.CLIENT_CONNECTED.getMessage());
 
+            long startRequestTime = System.currentTimeMillis();
             checkRequestAndSendResponse(headers);
             this.closeSocket();
 
+            long totalRequestTime = System.currentTimeMillis() - startRequestTime;
             System.out.printf(Messages.CLIENT_LOG.getMessage(),
                     Instant.now().getEpochSecond(),
                     socket.getInetAddress().getHostAddress(),
                     socket.getPort(),
-                    Messages.CLIENT_DISCONNECTED.getMessage());
+                    Messages.CLIENT_DISCONNECTED.getMessage() + " [" + totalRequestTime + " ms]");
         }
 
         /**
@@ -169,7 +174,9 @@ public class Server {
         }
 
         /**
-         * Send the GET request
+         * Send the GET request.
+         * Always check if a file/page with the name of the end point exists
+         * If not, then checks if the end point is on the list of endpoints
          *
          * @param endPoint the end point to send
          * @throws IOException
@@ -182,7 +189,8 @@ public class Server {
 
             File htmlPage = new File(htmlFile);
             if (!htmlPage.exists() || !htmlPage.isFile()) {
-                send404();
+                //Endpoint checkEndpoint = Endpoint.getEndpoint(endPoint);
+                Endpoint.getEndpoint(endPoint).getHandler().execute(out);
                 return;
             }
 
@@ -193,17 +201,6 @@ public class Server {
                     .build();
 
             sendHeaderAndPage(responseHeader.headerToBytes(), Files.readAllBytes(Path.of(htmlPage.getPath())));
-        }
-
-        private void send404() throws IOException {
-            File htmlFile = new File(Constants.RESOURCES_PATH + "404.html");
-            Header responseHeader = new Header.Builder(ResponseCodes.NOT_FOUND.toString())
-                    .contentType(Files.probeContentType(Path.of(htmlFile.getPath())))
-                    .contentLength(String.valueOf(htmlFile.length()))
-                    .endResponse()
-                    .build();
-
-            sendHeaderAndPage(responseHeader.headerToBytes(), Files.readAllBytes(Path.of(htmlFile.getPath())));
         }
 
         /**

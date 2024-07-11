@@ -1,4 +1,4 @@
-package org.ruitx.simpleserver;
+package org.ruitx.simpleserver.server;
 
 import java.lang.reflect.Field;
 import java.util.Arrays;
