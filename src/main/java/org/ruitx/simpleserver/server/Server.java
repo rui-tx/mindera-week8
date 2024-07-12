@@ -195,15 +195,27 @@ public class Server {
                 return;
             }
 
-            String parsedHTML = HtmlParser.parseHTML(htmlPage);
+            // TODO: refactor this whole thing
+            // only parse html files
+            if ((Files.probeContentType(Path.of(htmlPage.getPath()))).equals("text/html")) {
+                String parsedHTML = HtmlParser.parseHTML(htmlPage);
+                Header responseHeader = new Header.Builder(ResponseCodes.OK.toString())
+                        .contentType(Files.probeContentType(Path.of(htmlPage.getPath())))
+                        .contentLength(String.valueOf(parsedHTML.length()))
+                        .endResponse()
+                        .build();
+
+                sendHeaderAndPage(responseHeader.headerToBytes(), parsedHTML.getBytes());
+                return;
+            }
+
             Header responseHeader = new Header.Builder(ResponseCodes.OK.toString())
                     .contentType(Files.probeContentType(Path.of(htmlPage.getPath())))
-                    .contentLength(String.valueOf(parsedHTML.length()))
+                    .contentLength(String.valueOf(htmlPage.length()))
                     .endResponse()
                     .build();
 
-            //sendHeaderAndPage(responseHeader.headerToBytes(), Files.readAllBytes(Path.of(htmlPage.getPath())));
-            sendHeaderAndPage(responseHeader.headerToBytes(), parsedHTML.getBytes());
+            sendHeaderAndPage(responseHeader.headerToBytes(), Files.readAllBytes(Path.of(htmlPage.getPath())));
         }
 
         /**
