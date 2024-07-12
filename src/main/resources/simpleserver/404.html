@@ -6,7 +6,7 @@
     <meta content="light dark" name="color-scheme">
     <link href="data:image/png;base64," rel="icon" type="image/png">
     <title>Java webserver</title>
-    <link href="../style.css" rel="stylesheet">
+    <link href='{{ pathFor("style.css") }}' rel="stylesheet">
     <script src="https://unpkg.com/htmx.org@2.0.0"></script>
 </head>
 <body>
@@ -16,7 +16,7 @@
         <aside>Page not found.</aside>
     </header>
 
-    <h3>Go back <a href="/">home</a></h3>
+    <h3>Go back <a href='{{ pathFor(" ") }}'>home</a></h3>
 
 </article>
 </body>

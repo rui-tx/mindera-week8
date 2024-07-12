@@ -6,22 +6,23 @@
     <meta content="light dark" name="color-scheme">
     <link href="data:image/png;base64," rel="icon" type="image/png">
     <title>Java webserver</title>
-    <link href="style.css" rel="stylesheet">
+    <link href='{{ pathFor("style.css") }}' rel="stylesheet">
     <script src="https://unpkg.com/htmx.org@2.0.0"></script>
 </head>
 <body>
 <article>
     <header>
         <h1>Java WebServer.</h1>
-        <aside></aside>
+        <aside>{{ pathFor("style.css") }}</aside>
+        <aside>{{ getServerPort() }}</aside>
     </header>
 
     <p>List of pages:
     <ul>
-        <li><a href="/test/page1.html">Page 1</a></li>
-        <li><a href="/test/page2.html">Page 2</a></li>
-        <li><a href="/test/page3.html">Page 3</a></li>
-        <li><a href="/about.html">About</a></li>
+        <li><a href='{{ pathFor("test/page1.html") }}'>Page 1</a></li>
+        <li><a href='{{ pathFor("test/page2.html") }}'>Page 2</a></li>
+        <li><a href='{{ pathFor("test/page3.html") }}'>Page 3</a></li>
+        <li><a href='{{ pathFor("about.html") }}'>About</a></li>
     </ul>
 </article>
 </body>

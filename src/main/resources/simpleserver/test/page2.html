@@ -6,7 +6,7 @@
     <meta content="light dark" name="color-scheme">
     <link href="data:image/png;base64," rel="icon" type="image/png">
     <title>Java webserver</title>
-    <link href="../style.css" rel="stylesheet">
+    <link href='{{ pathFor("style.css") }}' rel="stylesheet">
     <script src="https://unpkg.com/htmx.org@2.0.0"></script>
 </head>
 <body>
@@ -17,17 +17,17 @@
     </header>
 
     <p> Sample image</p>
-    <img src="/sapo.jpeg"/>
+    <img src='{{ pathFor("sapo.jpeg") }}'/>
 
     <p> Sample button</p>
 
     <aside>
-        <button hx-get="/test" hx-swap="outerHTML">
+        <button hx-get="/p/test" hx-swap="outerHTML">
             Click Me
         </button>
     </aside>
 
-    <h4>Go back <a href="/">home</a></h4>
+    <h4>Go back <a href='{{ pathFor(" ") }}'>home</a></h4>
 </article>
 </body>
 </html>

@@ -2,6 +2,7 @@ package org.ruitx.simpleserver.server;
 
 import org.ruitx.simpleserver.Constants;
 import org.ruitx.simpleserver.server.endpoints.Endpoint;
+import org.ruitx.simpleserver.server.htmlparser.HtmlParser;
 
 import java.io.*;
 import java.net.ServerSocket;
@@ -191,6 +192,20 @@ public class Server {
             if (!htmlPage.exists() || !htmlPage.isFile()) {
                 //Endpoint checkEndpoint = Endpoint.getEndpoint(endPoint);
                 Endpoint.getEndpoint(endPoint).getHandler().execute(out);
+                return;
+            }
+
+            // TODO: refactor this whole thing
+            // only parse html files
+            if ((Files.probeContentType(Path.of(htmlPage.getPath()))).equals("text/html")) {
+                String parsedHTML = HtmlParser.parseHTML(htmlPage);
+                Header responseHeader = new Header.Builder(ResponseCodes.OK.toString())
+                        .contentType(Files.probeContentType(Path.of(htmlPage.getPath())))
+                        .contentLength(String.valueOf(parsedHTML.length()))
+                        .endResponse()
+                        .build();
+
+                sendHeaderAndPage(responseHeader.headerToBytes(), parsedHTML.getBytes());
                 return;
             }
 

@@ -12,7 +12,7 @@ public class TestRevertHandler implements EndpointHandler {
     public void execute(DataOutputStream out) throws IOException {
 
         String htmlFragment = """
-                <button hx-get="/test" hx-swap="outerHTML">
+                <button hx-get="/p/test" hx-swap="outerHTML">
                         Click Me
                 </button>
                 """;
