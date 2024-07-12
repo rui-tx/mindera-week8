@@ -5,6 +5,7 @@ import org.ruitx.simpleserver.Constants;
 import org.ruitx.simpleserver.server.Header;
 import org.ruitx.simpleserver.server.Messages;
 import org.ruitx.simpleserver.server.ResponseCodes;
+import org.ruitx.simpleserver.server.htmlparser.HtmlParser;
 
 import java.io.DataOutputStream;
 import java.io.File;
@@ -18,14 +19,17 @@ public class EndpointNotFoundHandler implements EndpointHandler {
     @Override
     public void execute(DataOutputStream out) throws IOException {
         File htmlFile = new File(Constants.RESOURCES_PATH + "404.html");
+        String parsedHTML = HtmlParser.parseHTML(htmlFile);
+
         Header responseHeader = new Header.Builder(ResponseCodes.NOT_FOUND.toString())
                 .contentType(Files.probeContentType(Path.of(htmlFile.getPath())))
-                .contentLength(String.valueOf(htmlFile.length()))
+                .contentLength(String.valueOf(parsedHTML.length()))
                 .endResponse()
                 .build();
 
         out.write(responseHeader.headerToBytes());
-        out.write(Files.readAllBytes(Path.of(htmlFile.getPath())), 0, Files.readAllBytes(Path.of(htmlFile.getPath())).length);
+        out.write(parsedHTML.getBytes());
+        //out.write(Files.readAllBytes(Path.of(htmlFile.getPath())), 0, Files.readAllBytes(Path.of(htmlFile.getPath())).length);
 
         System.out.printf(Messages.SERVER_LOG.getMessage(),
                 Instant.now().getEpochSecond(),

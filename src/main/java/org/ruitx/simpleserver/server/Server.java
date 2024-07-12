@@ -2,6 +2,7 @@ package org.ruitx.simpleserver.server;
 
 import org.ruitx.simpleserver.Constants;
 import org.ruitx.simpleserver.server.endpoints.Endpoint;
+import org.ruitx.simpleserver.server.htmlparser.HtmlParser;
 
 import java.io.*;
 import java.net.ServerSocket;
@@ -194,13 +195,15 @@ public class Server {
                 return;
             }
 
+            String parsedHTML = HtmlParser.parseHTML(htmlPage);
             Header responseHeader = new Header.Builder(ResponseCodes.OK.toString())
                     .contentType(Files.probeContentType(Path.of(htmlPage.getPath())))
-                    .contentLength(String.valueOf(htmlPage.length()))
+                    .contentLength(String.valueOf(parsedHTML.length()))
                     .endResponse()
                     .build();
 
-            sendHeaderAndPage(responseHeader.headerToBytes(), Files.readAllBytes(Path.of(htmlPage.getPath())));
+            //sendHeaderAndPage(responseHeader.headerToBytes(), Files.readAllBytes(Path.of(htmlPage.getPath())));
+            sendHeaderAndPage(responseHeader.headerToBytes(), parsedHTML.getBytes());
         }
 
         /**
